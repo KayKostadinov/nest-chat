@@ -1,34 +1,51 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Body,
+  Post,
+  Get,
+  UseGuards,
+  Request,
+  HttpCode,
+  Res,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { CreateUserDto } from '../users/dto/user.dto';
+import { LocalAuthGuard } from './localAuth.guard';
+import { Response } from 'express';
+import { sanitizeUser } from './sanitizeUser';
+import JwtAuthGuard from './jwtAuth.guard';
 
 @Controller('auth')
+@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @HttpCode(200)
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(@Request() { user }, @Res() res: Response) {
+    const cookie = this.authService.getCookieWithJwtToken(user.id);
+    res.setHeader('Set-Cookie', cookie);
+    return res.send(sanitizeUser(user));
   }
 
+  @Post('signup')
+  async signUp(@Body() user: CreateUserDto) {
+    return await this.authService.register(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logOut(@Request() req, @Res() res: Response) {
+    res.setHeader('Set-Cookie', this.authService.getCookieForLogOut());
+    return res.sendStatus(200);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  authenticate(@Request() { user }) {
+    return sanitizeUser(user);
   }
 }
