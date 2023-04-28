@@ -1,38 +1,72 @@
 import {
-  WebSocketGateway,
   SubscribeMessage,
-  MessageBody,
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayInit,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { RoomsService } from '../rooms/rooms.service';
+import { UsersService } from '../users/users.service';
 import { MessagesService } from './messages.service';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
 
-@WebSocketGateway()
-export class MessagesGateway {
-  constructor(private readonly messagesService: MessagesService) {}
+@WebSocketGateway({ namespace: '/chat' })
+export class MessagingGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
+  constructor(
+    private readonly roomsService: RoomsService,
+    private readonly usersService: UsersService,
+    private readonly messagesService: MessagesService,
+  ) {}
 
-  @SubscribeMessage('createMessage')
-  create(@MessageBody() createMessageDto: CreateMessageDto) {
-    return this.messagesService.create(createMessageDto);
+  @WebSocketServer()
+  server: Server;
+
+  afterInit(server: Server) {
+    console.log('WebSocket server initialized');
   }
 
-  @SubscribeMessage('findAllMessages')
-  findAll() {
-    return this.messagesService.findAll();
+  handleConnection(client: Socket, ...args: any[]) {
+    console.log(`Client connected: ${client.id}`);
   }
 
-  @SubscribeMessage('findOneMessage')
-  findOne(@MessageBody() id: number) {
-    return this.messagesService.findOne(id);
+  handleDisconnect(client: Socket) {
+    console.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage('updateMessage')
-  update(@MessageBody() updateMessageDto: UpdateMessageDto) {
-    return this.messagesService.update(updateMessageDto.id, updateMessageDto);
+  @SubscribeMessage('joinRoom')
+  async handleJoinRoom(client: Socket, { roomId, userId }): Promise<void> {
+    await this.roomsService.addUserToRoom(userId, roomId);
+    client.join(roomId.toString());
+    client.to(roomId.toString()).emit('userJoined', { userId, roomId });
   }
 
-  @SubscribeMessage('removeMessage')
-  remove(@MessageBody() id: number) {
-    return this.messagesService.remove(id);
+  @SubscribeMessage('leaveRoom')
+  async handleLeaveRoom(client: Socket, { roomId, userId }): Promise<void> {
+    await this.roomsService.removeUserFromRoom(userId, roomId);
+    client.leave(roomId.toString());
+    client.to(roomId.toString()).emit('userLeft', { userId, roomId });
+  }
+
+  @SubscribeMessage('sendMessage')
+  async handleSendMessage(
+    client: Socket,
+    { roomId, userId, content },
+  ): Promise<void> {
+    const message = await this.messagesService.createMessage(
+      content,
+      userId,
+      roomId,
+    );
+
+    client.to(roomId.toString()).emit('messageReceived', {
+      userId,
+      roomId,
+      content,
+      messageId: message.id,
+      timestamp: message.updatedAt,
+    });
   }
 }

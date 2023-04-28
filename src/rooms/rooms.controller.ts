@@ -12,10 +12,15 @@ import {
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import JwtAuthGuard from '../auth/jwtAuth.guard';
+import { MessagesService } from '../messages/messages.service';
+import Message from '../messages/entities/message.entity';
 
 @Controller('rooms')
 export class RoomsController {
-  constructor(private readonly roomsService: RoomsService) {}
+  constructor(
+    private readonly roomsService: RoomsService,
+    private readonly messagesService: MessagesService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -49,5 +54,17 @@ export class RoomsController {
     @Param('roomId') roomId: number,
   ) {
     return this.roomsService.removeUserFromRoom(userId, roomId);
+  }
+
+  @Get(':roomId/messages')
+  async getLatestMessages(
+    @Param('roomId') roomId: number,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<Message[]> {
+    page = page || 1;
+    limit = limit || 10;
+
+    return this.messagesService.getLatestMessages(roomId, page, limit);
   }
 }
