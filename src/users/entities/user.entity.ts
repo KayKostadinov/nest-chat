@@ -1,4 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Message } from '../../messages/entities/message.entity';
+import Room from '../../rooms/entities/room.entity';
 
 @Entity()
 export class User {
@@ -10,6 +18,12 @@ export class User {
 
   @Column()
   public password: string;
+
+  @ManyToMany(() => Room, (room) => room.users)
+  public rooms: Room[];
+
+  @OneToMany(() => Message, (message) => message.user)
+  public messages: Message[];
 }
 
 export default User;
