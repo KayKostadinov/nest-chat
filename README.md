@@ -1,7 +1,9 @@
-#NestJS Chat API
+# NestJS Chat API
+
 This is a simple chat API built with NestJS that allows users to create and join chat rooms, send messages, and view chat history.
 
-##Local setup
+## Local setup
+
 Prerequesites: Docker, Node.js
 
 1. Clone this repo and `cd nest-chat`
