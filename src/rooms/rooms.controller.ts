@@ -14,12 +14,14 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import JwtAuthGuard from '../auth/jwtAuth.guard';
 import { MessagesService } from '../messages/messages.service';
 import Message from '../messages/entities/message.entity';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('rooms')
 export class RoomsController {
   constructor(
     private readonly roomsService: RoomsService,
     private readonly messagesService: MessagesService,
+    private readonly authService: AuthService,
   ) {}
 
   @Post()
@@ -59,8 +61,8 @@ export class RoomsController {
   @Get(':roomId/messages')
   async getLatestMessages(
     @Param('roomId') roomId: number,
-    @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ): Promise<Message[]> {
     page = page || 1;
     limit = limit || 10;

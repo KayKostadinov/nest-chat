@@ -8,6 +8,9 @@ import Message from '../messages/entities/message.entity';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { MessagesModule } from '../messages/messages.module';
+import { AuthService } from '../auth/auth.service';
+import { MessagesService } from '../messages/messages.service';
+import { UsersService } from '../users/users.service';
 
 @Module({
   imports: [
@@ -17,6 +20,7 @@ import { MessagesModule } from '../messages/messages.module';
     MessagesModule,
   ],
   controllers: [RoomsController],
-  providers: [RoomsService],
+  providers: [RoomsService, AuthService, MessagesService, UsersService],
+  exports: [RoomsService],
 })
 export class RoomsModule {}
