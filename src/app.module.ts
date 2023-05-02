@@ -8,7 +8,6 @@ import { AuthModule } from './auth/auth.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { MessagesModule } from './messages/messages.module';
 import { ApiTags } from '@nestjs/swagger';
-
 @ApiTags('chatApi')
 @Module({
   imports: [

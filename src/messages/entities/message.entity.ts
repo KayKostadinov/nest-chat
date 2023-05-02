@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import Room from '../../rooms/entities/room.entity';
 import User from '../../users/entities/user.entity';
 
@@ -11,6 +17,7 @@ export class Message {
   public content: string;
 
   @ManyToOne(() => User, (user) => user.messages, { onDelete: 'CASCADE' })
+  @JoinTable()
   public user: User;
 
   @ManyToOne(() => Room, (room) => room.messages, { onDelete: 'CASCADE' })

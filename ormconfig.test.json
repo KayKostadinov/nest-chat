@@ -1,0 +1,13 @@
+{
+  "type": "sqlite",
+  "database": ":memory:",
+  "synchronize": true,
+  "dropSchema": true,
+  "logging": false,
+  "entities": [
+    "src/**/*.entity{.ts,.js}"
+  ],
+  "cli": {
+    "entitiesDir": "src"
+  }
+}
