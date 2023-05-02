@@ -40,14 +40,14 @@ export class MessagingGateway
   async handleJoinRoom(client: Socket, { roomId, userId }): Promise<void> {
     await this.roomsService.addUserToRoom(userId, roomId);
     client.join(roomId.toString());
-    client.to(roomId.toString()).emit('userJoined', { userId, roomId });
+    this.server.to(roomId.toString()).emit('userJoined', { userId, roomId });
   }
 
   @SubscribeMessage('leaveRoom')
   async handleLeaveRoom(client: Socket, { roomId, userId }): Promise<void> {
     await this.roomsService.removeUserFromRoom(userId, roomId);
+    this.server.to(roomId.toString()).emit('userLeft', { userId, roomId });
     client.leave(roomId.toString());
-    client.to(roomId.toString()).emit('userLeft', { userId, roomId });
   }
 
   @SubscribeMessage('sendMessage')
@@ -61,7 +61,7 @@ export class MessagingGateway
       roomId,
     );
 
-    client.to(roomId.toString()).emit('messageReceived', {
+    this.server.to(roomId.toString()).emit('messageReceived', {
       userId,
       roomId,
       content,
