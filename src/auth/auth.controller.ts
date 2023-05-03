@@ -7,8 +7,6 @@ import {
   Request,
   HttpCode,
   Res,
-  UseInterceptors,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto/user.dto';
@@ -18,14 +16,13 @@ import { sanitizeUser } from './sanitizeUser';
 import JwtAuthGuard from './jwtAuth.guard';
 
 @Controller('auth')
-@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @HttpCode(200)
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() { user }, @Res() res: Response) {
+  async login(@Request() { user }, @Res({ passthrough: true }) res: Response) {
     const cookie = this.authService.getCookieWithJwtToken(user.id);
     res.setHeader('Set-Cookie', cookie);
     return res.send(sanitizeUser(user));
@@ -43,8 +40,8 @@ export class AuthController {
     return res.sendStatus(200);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
+  @UseGuards(JwtAuthGuard)
   authenticate(@Request() { user }) {
     return sanitizeUser(user);
   }
